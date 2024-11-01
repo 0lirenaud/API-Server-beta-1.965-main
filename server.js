@@ -9,6 +9,7 @@ import APIServer from "./APIServer.js";
 import RouteRegister from './routeRegister.js';
 
 RouteRegister.add('GET', 'Bookmarks', 'list');
+//Faire RouteRegister.add('GET', 'Posts', 'list');  ?
 
 let server = new APIServer();
 server.start();
