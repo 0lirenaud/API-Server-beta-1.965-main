@@ -211,6 +211,7 @@ function getFormData($form) {
     $.each($form.serializeArray(), (index, control) => {
         jsonObject[control.name] = control.value.replace(removeTag, "");
     });
+    console.log(jsonObject);
     return jsonObject;
 }
 function newPost() {
@@ -229,16 +230,16 @@ function renderPostForm(Post = null) {
     eraseContent();
     hold_Periodic_Refresh = true;
     let create = Post == null;
-    let favicon = `<div class="big-favicon"></div>`;
     if (create){
         Post = newPost();
         Post.Image = "images/no-post.jpg";
+        Post.Creation = secondsToDateString(nowInSeconds());
     }
     $("#actionTitle").text(create ? "Création" : "Modification");
     $("#content").append(`
         <form class="form" id="PostForm">
             <input type="hidden" name="Id" value="${Post.Id}"/>
-            <input type="hidden" name="Creation" value="${Post.Creation}/>
+            <input type="hidden" name="Creation" value="${Post.Creation}"/>
 
             <label for="Title" class="form-label">Titre: </label>
             <input 
@@ -257,8 +258,7 @@ function renderPostForm(Post = null) {
                 name="Text"
                 id="Text"
                 placeholder="Description"
-                required
-                value="${Post.Text}"></textarea>
+                required>${Post.Text}</textarea>
             <label for="Category" class="form-label">Catégorie: </label>
             <input 
                 class="form-control"
@@ -290,7 +290,8 @@ function renderPostForm(Post = null) {
         Post.Title = capitalizeFirstLetter(Post.Title);
         Post.Text = capitalizeFirstLetter(Post.Text);
         Post.Category = capitalizeFirstLetter(Post.Category);
-        Post.Creation = secondsToDateString(nowInSeconds());
+        if (!Post.Creation)
+            Post.Creation = secondsToDateString(nowInSeconds());
         showWaitingGif();
         let result = await Posts_API.Save(Post, create);
         if (result)
