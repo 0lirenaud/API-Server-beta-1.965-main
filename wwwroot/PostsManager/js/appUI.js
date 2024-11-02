@@ -233,7 +233,6 @@ function renderPostForm(Post = null) {
     if (create){
         Post = newPost();
         Post.Image = "images/no-post.jpg";
-        Post.Creation = secondsToDateString(nowInSeconds());
     }
     $("#actionTitle").text(create ? "Création" : "Modification");
     $("#content").append(`
@@ -290,8 +289,7 @@ function renderPostForm(Post = null) {
         Post.Title = capitalizeFirstLetter(Post.Title);
         Post.Text = capitalizeFirstLetter(Post.Text);
         Post.Category = capitalizeFirstLetter(Post.Category);
-        if (!Post.Creation)
-            Post.Creation = secondsToDateString(nowInSeconds());
+        Post.Creation = nowInSeconds();
         showWaitingGif();
         let result = await Posts_API.Save(Post, create);
         if (result)
@@ -310,7 +308,7 @@ function renderPost(Post) {
         <div class="Post noselect">
             <div>${Post.Title}</div>
             <div>${Post.Category}</div>
-            <div>${Post.Creation}</div>
+            <div>${secondsToDateString(Post.Creation)}</div>
             <div>${Post.Text}</div>
             <div>${Post.Image}</div>
             <div class="PostCommandPanel">
