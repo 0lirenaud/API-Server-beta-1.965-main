@@ -22,7 +22,9 @@ async function Init_UI() {
         renderCreatePostForm();
     });
     $('#abort').on("click", async function () {
-        renderPosts();
+        showPosts();
+        $("#PostForm").remove();
+        $('.PostdeleteForm').remove();
     });
     $('#aboutCmd').on("click", function () {
         renderAbout();
@@ -211,8 +213,10 @@ async function renderDeletePostForm(id) {
                 <br>
                 ${renderPost(Post, true).html()}
                 <br>
-                <input type="button" value="Effacer" id="deletePost" class="btn btn-primary">
-                <input type="button" value="Annuler" id="cancel" class="btn btn-secondary">
+                <div class="formButtons">
+                    <input type="button" value="Effacer" id="deletePost" class="btn btn-primary">
+                    <input type="button" value="Annuler" id="cancel" class="btn btn-secondary">
+                </div>
             </div>    
             `);
             $('#deletePost').on("click", async function () {
@@ -227,6 +231,8 @@ async function renderDeletePostForm(id) {
             });
             $('#cancel').on("click", function () {
                 showPosts();
+                $('.PostdeleteForm').remove();
+                $('#filterContainer').show();
             });
         }
         else
@@ -262,6 +268,7 @@ function renderPostForm(Post = null) {
         Post.Image = "images/no-post.jpg";
     }
     $("#actionTitle").text(create ? "Création" : "Modification");
+    $("#PostForm").show();
     $("#content").append(`
         <form class="form" id="PostForm">
             <input type="hidden" name="Id" value="${Post.Id}"/>
@@ -328,6 +335,7 @@ function renderPostForm(Post = null) {
     });
     $('#cancel').on("click", function () {
         showPosts();
+        $("#PostForm").remove();
     });
 }
 function renderPost(Post, hideOptions = false) {
