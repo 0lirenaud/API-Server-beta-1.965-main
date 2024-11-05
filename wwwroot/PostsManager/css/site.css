@@ -1,7 +1,9 @@
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans");
 * {
     margin: 0px;
     padding: 0px;
     box-sizing: border-box;
+    font-family: 'Open Sans', sans-serif;
 }
 
 .noselect {
@@ -35,17 +37,60 @@
 }
 
 #header {
+    display: flex;
+    justify-content: space-around;
+    flex-direction: row;
+    gap: 10px;
     border: 1px solid #ccc;
     border-radius: 9px;
     background-color: white;
-    display: grid;
-    grid-template-columns: 50px auto 50px 30px;
     width: 100%;
     height: 60px;
-    align-items: center;
     padding: 8px;
+    align-items: center;
 }
-
+#header .titleContainer,
+#header #filterContainer,
+#header .headerOptions{
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+#actionTitle{
+    font-weight: bold;
+    margin-bottom: inherit;
+}
+#postFilter{
+    width: 100%;
+    padding: 5px 40px 5px 5px;
+    font-size: 12px;
+    border-radius: 2px;
+    border: 1px solid #ccc;
+    display: inline-block;
+    font-size: 1.1rem;
+    font-family: Open Sans, FontAwesome, sans-serif;
+    position: relative;
+    margin-bottom: inherit !important;
+    box-sizing: border-box;
+}
+#filterContainer span{
+    position: absolute;
+    color:rgb(0, 87, 204);
+    cursor: pointer;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+}
+#filterContainer{
+    position: relative;
+    width: 40%;
+}
+#searchBtn{
+    position: absolute;
+    top: 0;
+    right: -15px;
+    cursor: pointer;
+}
 #content {
     border: 1px solid #ccc;
     border-radius: 9px;

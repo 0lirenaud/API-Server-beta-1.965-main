@@ -15,17 +15,25 @@
 <body>
     <div id="main">
         <div id="header">
-            <img src="post_logo.png" class="appLogo" alt="" title="Gestionnaire de favoris">
-            <h4 id="actionTitle">Liste des publications</h4>
-            <i class="cmdIcon fa fa-plus" id="createPost" title="Ajouter une publication"></i>
-            <i class="cmdIcon fa fa-times" id="abort" title="Annuler"></i>
-            <div class="dropdown ms-auto">
-                <div data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="cmdIcon fa fa-ellipsis-vertical"></i>
-                </div>
-                <div class="dropdown-menu noselect" id="DDMenu">
-                    <div class="dropdown-item menuItemLayout" id="aboutCmd">
-                        <i class="menuIcon fa fa-info-circle mx-2"></i> À propos...
+            <div class="titleContainer">
+                <img src="post_logo.png" class="appLogo" alt="" title="Gestionnaire de favoris">
+                <h4 id="actionTitle">Liste des publications</h4>
+            </div>
+            <div id="filterContainer">
+                <input type="text" name="postFilter" id="postFilter" value="" placeholder="&#xf002; Rechercher...">
+                <span><i class="fa fa-search fa-xl searchBttn"></i></span>
+            </div>
+            <div class="headerOptions">
+                <i class="cmdIcon fa fa-plus" id="createPost" title="Ajouter une publication"></i>
+                <i class="cmdIcon fa fa-times" id="abort" title="Annuler"></i>
+                <div class="dropdown ms-auto">
+                    <div data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="cmdIcon fa fa-ellipsis-vertical"></i>
+                    </div>
+                    <div class="dropdown-menu noselect" id="DDMenu">
+                        <div class="dropdown-item menuItemLayout" id="aboutCmd">
+                            <i class="menuIcon fa fa-info-circle mx-2"></i> À propos...
+                        </div>
                     </div>
                 </div>
             </div>
