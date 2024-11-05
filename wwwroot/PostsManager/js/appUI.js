@@ -31,13 +31,19 @@ async function Init_UI() {
 }
 
 function showPosts() {
-    $("#actionTitle").text("Liste des favoris");
+    $("#actionTitle").text("Liste des publications");
     $("#scrollPanel").show();
     $('#abort').hide();
-    $('#bookmarkForm').hide();
+    $('#PostForm').hide();
     $('#aboutContainer').hide();
     $("#createPost").show();
     hold_Periodic_Refresh = false;
+}
+function hidePosts() {
+    $("#scrollPanel").hide();
+    $("#createPost").hide();
+    $("#abort").show();
+    hold_Periodic_Refresh = true;
 }
 
 function start_Periodic_Refresh() {
@@ -46,7 +52,7 @@ function start_Periodic_Refresh() {
             let etag = await Posts_API.HEAD();
             if (currentETag != etag) {
                 currentETag = etag;
-                renderPosts();
+                await pageManager.update(false);
             }
         }
     },
@@ -125,41 +131,36 @@ function compileCategories(posts) {
     }
 }
 async function renderPosts(queryString) {
-    hold_Periodic_Refresh = false;
-    showWaitingGif();
+    let endOfData = false;
     $("#actionTitle").text("Liste des publications");
-    if($("#filterContainer").is(":hidden"))
-        $("#filterContainer").show();
-    $("#createPost").show();
-    $("#abort").hide();
     addWaitingGif();
-    if (!endOfData){
-        let response = await Posts_API.Get(query = queryString);
+    let response = await Posts_API.Get(query = queryString);
+    if(!Posts_API.error) {
+        currentETag = response.ETag;
         let Posts = response.data;
-        if(!Posts_API.error) {
-            if(Posts.length > 0) {
-                Posts.forEach(Post => {
-                    if ((selectedCategory === "") || (selectedCategory === Post.Category))
-                        $("#postsPanel").append(renderPost(Post));
-                });
-                $(".editCmd").on("click", function () {
-                    pageManager.storeScrollPosition();
-                    renderEditPostForm($(this).attr("editpostId"));
-                });
-                $(".deleteCmd").on("click", function () {
-                    pageManager.storeScrollPosition();
-                    renderDeletePostForm($(this).attr("deletepostId"));
-                });
-                endOfData = false;
-            }
-            else 
-             endOfData = true;
+        if(Posts.length > 0) {
+            Posts.forEach(Post => {
+                if ((selectedCategory === "") || (selectedCategory === Post.Category))
+                    $("#postsPanel").append(renderPost(Post));
+            });
+            $(".editCmd").off();
+            $(".editCmd").on("click", function () {
+                renderEditPostForm($(this).attr("editpostId"));
+            });
+            $(".deleteCmd").off();
+            $(".deleteCmd").on("click", function () {
+                renderDeletePostForm($(this).attr("deletepostId"));
+            });
         }
         else {
-            renderError(Posts_API.currentHttpError);
+            endOfData = true;
         }
     }
+    else {
+        renderError(Posts_API.currentHttpError);
+    }
     removeWaitingGif();
+    return endOfData;
 }
 function addWaitingGif() {
     $("#postsPanel").append($("<div id='waitingGif' class='waitingGifcontainer'><img class='waitingGif' src='Loading_icon.gif' /></div>'"));
@@ -167,17 +168,7 @@ function addWaitingGif() {
 function removeWaitingGif() {
     $("#waitingGif").remove();
 }
-function eraseContent() {
-    $("#content").empty();
-}
-function saveContentScrollPosition() {
-    contentScrollPosition = $("#content")[0].scrollTop;
-}
-function restoreContentScrollPosition() {
-    $("#content")[0].scrollTop = contentScrollPosition;
-}
 function renderError(message) {
-    eraseContent();
     $("#content").append(
         $(`
             <div class="errorContainer">
@@ -190,45 +181,57 @@ function renderCreatePostForm() {
     renderPostForm();
 }
 async function renderEditPostForm(id) {
+    addWaitingGif();
     let response = await Posts_API.Get(id)
-    let Post = response.data;
-    if (Post !== null)
-        renderPostForm(Post);
-    else
-        renderError("Publication introuvable!");
+    if(!Posts_API.error){
+        let Post = response.data;
+        if (Post !== null)
+            renderPostForm(Post);
+        else
+            renderError("Publication introuvable!");
+    } else {
+        renderError(Posts_API.currentHttpError);
+    }
+    removeWaitingGif();
 }
 async function renderDeletePostForm(id) {
+    hidePosts();
     $("#createPost").hide();
     $("#abort").show();
     $("#actionTitle").text("Retrait");
     let response = await Posts_API.Get(id)
-    let Post = response.data;
-    eraseContent();
-    if (Post !== null) {
-        $("#content").append(`
-        <div class="PostdeleteForm">
-            <h4>Effacer la publication suivante?</h4>
-            <br>
-            <!--TODO-->
-            <br>
-            <input type="button" value="Effacer" id="deletePost" class="btn btn-primary">
-            <input type="button" value="Annuler" id="cancel" class="btn btn-secondary">
-        </div>    
-        `);
-        $('#deletePost').on("click", async function () {
-            showWaitingGif();
-            let result = await Posts_API.Delete(Post.Id);
-            if (result)
-                pageManager.update(true);
-            else
-                renderError("Une erreur est survenue!");
-        });
-        $('#cancel').on("click", function () {
-            renderPosts();
-        });
-    } else {
-        renderError("Publication introuvable!");
-    }
+    if(!Posts_API.error) {
+        let Post = response.data;
+        if (Post !== null) {
+            $("#content").append(`
+            <div class="PostdeleteForm">
+                <h4>Effacer la publication suivante?</h4>
+                <br>
+                <!--TODO-->
+                <br>
+                <input type="button" value="Effacer" id="deletePost" class="btn btn-primary">
+                <input type="button" value="Annuler" id="cancel" class="btn btn-secondary">
+            </div>    
+            `);
+            $('#deletePost').on("click", async function () {
+                showWaitingGif();
+                await Posts_API.Delete(Post.Id);
+                if (!Posts_API.error) {
+                    showPosts();
+                    await pageManager.update(false);
+                }
+                else
+                    renderError("Une erreur est survenue!");
+            });
+            $('#cancel').on("click", function () {
+                showPosts();
+            });
+        }
+        else
+            renderError("Publication introuvable!");
+    } 
+    else
+        renderError(Posts_API.currentHttpError);
 }
 function getFormData($form) {
     const removeTag = new RegExp("(<[a-zA-Z0-9]+>)|(</[a-zA-Z0-9]+>)", "g");
@@ -250,11 +253,7 @@ function newPost() {
     return Post;
 }
 function renderPostForm(Post = null) {
-    $("#createPost").hide();
-    $("#filterContainer").hide();
-    $("#abort").show();
-    eraseContent();
-    hold_Periodic_Refresh = true;
+    hidePosts();
     let create = Post == null;
     if (create){
         Post = newPost();
@@ -318,14 +317,15 @@ function renderPostForm(Post = null) {
         Post.Creation = nowInSeconds();
         Post = await Posts_API.Save(Post, create);
         if (!Posts_API.error){
-
+            showPosts();
+            await pageManager.update(false);
+            pageManager.scrollToElem(Post.Id);
         }
-            pageManager.update(true)
         else
             renderError("Une erreur est survenue!");
     });
     $('#cancel').on("click", function () {
-        renderPosts();
+        showPosts();
     });
 }
 function renderPost(Post) {

@@ -161,8 +161,6 @@
     border-radius: 6px;
     margin: 20px 10px 0;
     max-width: 700px;
-    min-height: 600px;
-    height: auto;
 }
 
 .post {
@@ -189,6 +187,7 @@
     width: 100%;
     overflow: hidden;
     border-radius: 5px;
+    height: 500px;
 }
 
 .postTitle {
