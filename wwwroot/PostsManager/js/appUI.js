@@ -1,17 +1,23 @@
 //Utiliser utilities, demander a chourot comment le joindre car j'y arrive pas.
 const periodicRefreshPeriod = 10;
-let contentScrollPosition = 0;
+let categories = [];
 let selectedCategory = "";
 let currentETag = "";
 let hold_Periodic_Refresh = false;
+let pageManager;
+let itemLayout;
 
 Init_UI();
 
 async function Init_UI() {
+    let postItemLayout = {
+        width: $("#sample").outerWidth(),
+        height: $("#sample").outerHeight()
+    };
     currentETag = await Posts_API.HEAD();
-    renderPosts();
+    pageManager = new PageManager('scrollPanel', 'postsPanel', postItemLayout, renderPosts);
+    $("#actionTitle").text("Liste des publications");
     $('#createPost').on("click", async function () {
-        saveContentScrollPosition();
         renderCreatePostForm();
     });
     $('#abort').on("click", async function () {
@@ -20,7 +26,18 @@ async function Init_UI() {
     $('#aboutCmd').on("click", function () {
         renderAbout();
     });
+    showPosts();
     start_Periodic_Refresh();
+}
+
+function showPosts() {
+    $("#actionTitle").text("Liste des favoris");
+    $("#scrollPanel").show();
+    $('#abort').hide();
+    $('#bookmarkForm').hide();
+    $('#aboutContainer').hide();
+    $("#createPost").show();
+    hold_Periodic_Refresh = false;
 }
 
 function start_Periodic_Refresh() {
@@ -106,39 +123,44 @@ function compileCategories(posts) {
         updateDropDownMenu(categories);
     }
 }
-async function renderPosts() {
+async function renderPosts(queryString) {
     hold_Periodic_Refresh = false;
-    showWaitingGif();
-    $("#actionTitle").text("Liste des publications");
     $("#createPost").show();
     $("#abort").hide();
-    let response = await Posts_API.Get();
-    currentETag = response.ETag;
-    let Posts = response.data;
-    compileCategories(Posts)
-    eraseContent();
-    if (Posts !== null) {
-        Posts.forEach(Post => {
-            if ((selectedCategory === "") || (selectedCategory === Post.Category))
-                $("#content").append(renderPost(Post));
-        });
-        restoreContentScrollPosition();
-        // Attached click events on command icons
-        $(".editCmd").on("click", function () {
-            saveContentScrollPosition();
-            renderEditPostForm($(this).attr("editpostId"));
-        });
-        $(".deleteCmd").on("click", function () {
-            saveContentScrollPosition();
-            renderDeletePostForm($(this).attr("deletepostId"));
-        });
-    } else {
-        renderError("Service introuvable");
+    addWaitingGif();
+    if (!endOfData){
+        let response = await Posts_API.Get(query = queryString);
+        let Posts = response.data;
+        if(!Posts_API.error) {
+            if(Posts.length > 0) {
+                Posts.forEach(Post => {
+                    if ((selectedCategory === "") || (selectedCategory === Post.Category))
+                        $("#postsPanel").append(renderPost(Post));
+                });
+                $(".editCmd").on("click", function () {
+                    pageManager.storeScrollPosition();
+                    renderEditPostForm($(this).attr("editpostId"));
+                });
+                $(".deleteCmd").on("click", function () {
+                    pageManager.storeScrollPosition();
+                    renderDeletePostForm($(this).attr("deletepostId"));
+                });
+                endOfData = false;
+            }
+            else 
+             endOfData = true;
+        }
+        else {
+            renderError(Posts_API.currentHttpError);
+        }
     }
+    removeWaitingGif();
 }
-function showWaitingGif() {
-    $("#content").empty();
-    $("#content").append($("<div class='waitingGifcontainer'><img class='waitingGif' src='Loading_icon.gif' /></div>'"));
+function addWaitingGif() {
+    $("#postsPanel").append($("<div id='waitingGif' class='waitingGifcontainer'><img class='waitingGif' src='Loading_icon.gif' /></div>'"));
+}
+function removeWaitingGif() {
+    $("#waitingGif").remove();
 }
 function eraseContent() {
     $("#content").empty();
@@ -163,7 +185,6 @@ function renderCreatePostForm() {
     renderPostForm();
 }
 async function renderEditPostForm(id) {
-    showWaitingGif();
     let response = await Posts_API.Get(id)
     let Post = response.data;
     if (Post !== null)
@@ -172,7 +193,6 @@ async function renderEditPostForm(id) {
         renderError("Publication introuvable!");
 }
 async function renderDeletePostForm(id) {
-    showWaitingGif();
     $("#createPost").hide();
     $("#abort").show();
     $("#actionTitle").text("Retrait");
@@ -194,7 +214,7 @@ async function renderDeletePostForm(id) {
             showWaitingGif();
             let result = await Posts_API.Delete(Post.Id);
             if (result)
-                renderPosts();
+                pageManager.update(true);
             else
                 renderError("Une erreur est survenue!");
         });
@@ -242,7 +262,7 @@ function renderPostForm(Post = null) {
 
             <label for="Title" class="form-label">Titre: </label>
             <input 
-                class="form-control Alpha"
+                class="form-control"
                 name="Title" 
                 id="Title" 
                 placeholder="Titre"
@@ -290,10 +310,11 @@ function renderPostForm(Post = null) {
         Post.Text = capitalizeFirstLetter(Post.Text);
         Post.Category = capitalizeFirstLetter(Post.Category);
         Post.Creation = nowInSeconds();
-        showWaitingGif();
-        let result = await Posts_API.Save(Post, create);
-        if (result)
-            renderPosts();
+        Post = await Posts_API.Save(Post, create);
+        if (!Posts_API.error){
+
+        }
+            pageManager.update(true)
         else
             renderError("Une erreur est survenue!");
     });
@@ -304,17 +325,19 @@ function renderPostForm(Post = null) {
 function renderPost(Post) {
     //Temporary
     return $(`
-    <div class="PostContainer" Post_id=${Post.Id}">
-        <div class="Post noselect">
-            <div>${Post.Title}</div>
-            <div>${Post.Category}</div>
-            <div>${secondsToDateString(Post.Creation)}</div>
-            <div>${Post.Text}</div>
-            <div>${Post.Image}</div>
-            <div class="PostCommandPanel">
-                <span class="editCmd cmdIcon fa fa-pencil" editPostId="${Post.Id}" title="Modifier ${Post.Title}"></span>
-                <span class="deleteCmd cmdIcon fa fa-trash" deletePostId="${Post.Id}" title="Effacer ${Post.Title}"></span>
+    <div class="postContainer" Post_id=${Post.Id}">
+        <div class="post noselect">
+            <div class="postHeader">
+                <div class="postCategory ${Post.Category}">${Post.Category}</div>
+                <div class="PostCommandPanel">
+                    <span class="editCmd cmdIcon fa-solid fa-pen" editPostId="${Post.Id}" title="Modifier ${Post.Title}"></span>
+                    <span class="deleteCmd cmdIcon fa-solid fa-xmark" deletePostId="${Post.Id}" title="Effacer ${Post.Title}"></span>
+                </div>
             </div>
+            <div class="postTitle">${Post.Title}</div>
+            <div class="postImgContainer"><img src="${Post.Image}" class="postImg" alt="Image de la publication"/></div>
+            <div class="postDate">${secondsToDateString(Post.Creation)}</div>
+            <div class="postDescription">${Post.Text}</div>
         </div>
     </div>           
     `);

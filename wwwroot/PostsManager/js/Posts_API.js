@@ -1,4 +1,9 @@
 class Posts_API {
+    static initHttpState() {
+        this.currentHttpError = "";
+        this.currentStatus = 0;
+        this.error = false;
+    }
     static API_URL() { return "http://localhost:5000/api/posts" };
     static async HEAD() {
         return new Promise(resolve => {
@@ -11,10 +16,10 @@ class Posts_API {
             });
         });
     }
-    static async Get(id = null) {
+    static async Get(id = null, query = "") {
         return new Promise(resolve => {
             $.ajax({
-                url: this.API_URL() + (id != null ? "/" + id : ""),
+                url: this.API_URL() + (id != null ? "/" + id : query),
                 complete: data => {  resolve({ETag:data.getResponseHeader('ETag'), data:data.responseJSON }); },
                 //success: data => { resolve(data); },
                 error: (xhr) => { console.log(xhr); resolve(null); }
