@@ -20,6 +20,18 @@ async function Init_UI() {
     $('#aboutCmd').on("click", function () {
         renderAbout();
     });
+    $('#filterContainer span').on("click", function(){
+        let keywords = $('#postFilter').val().split(' ');
+        let queryString = "?keywords="
+        keywords.forEach((k,i) => {queryString+=k + ',';});
+        renderPosts(queryString);
+    });
+    // $('#filterContainer span').on("change", function(){
+    //     let keywords = $('#postFilter').val().split(' ');
+    //     let queryString = "?keywords="
+    //     keywords.forEach((k,i) => {queryString+=k + ',';});
+    //     renderPosts(queryString);
+    // });
     start_Periodic_Refresh();
 }
 
