@@ -58,6 +58,7 @@ function renderAbout() {
     eraseContent();
     $("#createPost").hide();
     $("#abort").show();
+    $("#filterContainer").hide();
     $("#actionTitle").text("À propos...");
     $("#content").append(
         $(`
@@ -125,6 +126,10 @@ function compileCategories(posts) {
 }
 async function renderPosts(queryString) {
     hold_Periodic_Refresh = false;
+    showWaitingGif();
+    $("#actionTitle").text("Liste des publications");
+    if($("#filterContainer").is(":hidden"))
+        $("#filterContainer").show();
     $("#createPost").show();
     $("#abort").hide();
     addWaitingGif();
@@ -246,6 +251,7 @@ function newPost() {
 }
 function renderPostForm(Post = null) {
     $("#createPost").hide();
+    $("#filterContainer").hide();
     $("#abort").show();
     eraseContent();
     hold_Periodic_Refresh = true;
