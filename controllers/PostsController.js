@@ -6,4 +6,10 @@ export default class PostsController extends Controller {
     constructor(HttpContext) {
         super(HttpContext, new Repository(new PostModel()));
     }
+        /* Http GET action */
+        list() {
+            this.HttpContext.response.JSON(
+                this.repository.getAll(this.HttpContext.path.params, this.repository.ETag)
+            );
+        }
 }

@@ -6,6 +6,7 @@ let currentETag = "";
 let hold_Periodic_Refresh = false;
 let pageManager;
 let itemLayout;
+let endOfData = false;
 
 Init_UI();
 
@@ -198,6 +199,7 @@ async function renderDeletePostForm(id) {
     hidePosts();
     $("#createPost").hide();
     $("#abort").show();
+    $('#filterContainer').hide();
     $("#actionTitle").text("Retrait");
     let response = await Posts_API.Get(id)
     if(!Posts_API.error) {
@@ -207,7 +209,7 @@ async function renderDeletePostForm(id) {
             <div class="PostdeleteForm">
                 <h4>Effacer la publication suivante?</h4>
                 <br>
-                <!--TODO-->
+                ${renderPost(Post, true).html()}
                 <br>
                 <input type="button" value="Effacer" id="deletePost" class="btn btn-primary">
                 <input type="button" value="Annuler" id="cancel" class="btn btn-secondary">
@@ -328,14 +330,14 @@ function renderPostForm(Post = null) {
         showPosts();
     });
 }
-function renderPost(Post) {
+function renderPost(Post, hideOptions = false) {
     //Temporary
     return $(`
     <div class="postContainer" Post_id=${Post.Id}">
         <div class="post noselect">
             <div class="postHeader">
                 <div class="postCategory ${Post.Category}">${Post.Category}</div>
-                <div class="PostCommandPanel">
+                <div class="PostCommandPanel" ${!hideOptions ? "" : "hidden"}>
                     <span class="editCmd cmdIcon fa-solid fa-pen" editPostId="${Post.Id}" title="Modifier ${Post.Title}"></span>
                     <span class="deleteCmd cmdIcon fa-solid fa-xmark" deletePostId="${Post.Id}" title="Effacer ${Post.Title}"></span>
                 </div>
