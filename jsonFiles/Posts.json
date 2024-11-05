@@ -1,1 +1,26 @@
-[{"Id":"b3901200-9ba4-11ef-9e29-df880eda94da","Creation":1730831716,"Title":"Article 1","Text":"Bonjour, ceci est un test","Category":"Test","Image":"b3906020-9ba4-11ef-9e29-df880eda94da.png"},{"Id":"c2a156f0-9ba4-11ef-9e29-df880eda94da","Creation":1730831741,"Title":"Article 2","Text":"Ceci est un autre test lol","Category":"Santé","Image":"c2a156f1-9ba4-11ef-9e29-df880eda94da.png"},{"Id":"d3a4cef0-9ba4-11ef-9e29-df880eda94da","Creation":1730831770,"Title":"Article 3","Text":"Un autre test","Category":"Voyage","Image":"d3a4f600-9ba4-11ef-9e29-df880eda94da.png"}]
+[
+  {
+    "Id": "77cdc0a0-9b95-11ef-92fc-f16c771edf75",
+    "Creation": 1730834236,
+    "Title": "Harris ou Trump: c’est jour de vote aux États-Unis",
+    "Text": "Des dizaines de millions d’Américains votent mardi pour décider qui de Kamala Harris ou Donald Trump entrera à la Maison-Blanche, une élection sous haute tension et aux enjeux historiques pour les États-Unis et le reste du monde. ",
+    "Category": "Politique",
+    "Image": "75991410-9b9a-11ef-92fc-f16c771edf75.avif"
+  },
+  {
+    "Id": "ceedefe0-9b9f-11ef-92fc-f16c771edf75",
+    "Creation": 1730830543,
+    "Title": "Le test va-t-il rallumer sa flamme?",
+    "Text": "En pleine soirée d’élection présidentielle aux États-Unis, le Canadien de Montréal se mesurera au Centre Bell mardi à des rivaux situés au nord de la frontière, c’est-à-dire les Flames de Calgary, qui éprouvent également leur large part d’ennuis ces temps-ci. ",
+    "Category": "Sport",
+    "Image": "ceee16f0-9b9f-11ef-92fc-f16c771edf75.avif"
+  },
+  {
+    "Id": "50867770-9baa-11ef-9d58-7b1b0a98750e",
+    "Creation": 1730835006,
+    "Title": "Élection américaine: Miller dit avoir un plan pour un éventuel afflux de migrants",
+    "Text": "Le Canada a un plan pour encaisser l’impact sur le système d’immigration si Donald Trump est élu, assure le ministre Marc Miller, mais il n’en dira rien avant les résultats du scrutin ce soir.",
+    "Category": "Politique",
+    "Image": "50867771-9baa-11ef-9d58-7b1b0a98750e.avif"
+  }
+]
