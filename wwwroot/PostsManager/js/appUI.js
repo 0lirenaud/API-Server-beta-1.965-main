@@ -6,6 +6,7 @@ let currentETag = "";
 let hold_Periodic_Refresh = false;
 let pageManager;
 let itemLayout;
+let endOfData = false;
 
 Init_UI();
 
@@ -126,7 +127,6 @@ function compileCategories(posts) {
 }
 async function renderPosts(queryString) {
     hold_Periodic_Refresh = false;
-    showWaitingGif();
     $("#actionTitle").text("Liste des publications");
     if($("#filterContainer").is(":hidden"))
         $("#filterContainer").show();
@@ -153,7 +153,7 @@ async function renderPosts(queryString) {
                 endOfData = false;
             }
             else 
-             endOfData = true;
+            endOfData = true;
         }
         else {
             renderError(Posts_API.currentHttpError);
@@ -200,6 +200,7 @@ async function renderEditPostForm(id) {
 async function renderDeletePostForm(id) {
     $("#createPost").hide();
     $("#abort").show();
+    $('#filterContainer').hide();
     $("#actionTitle").text("Retrait");
     let response = await Posts_API.Get(id)
     let Post = response.data;
@@ -209,7 +210,7 @@ async function renderDeletePostForm(id) {
         <div class="PostdeleteForm">
             <h4>Effacer la publication suivante?</h4>
             <br>
-            <!--TODO-->
+            ${renderPost(Post, true).html()}
             <br>
             <input type="button" value="Effacer" id="deletePost" class="btn btn-primary">
             <input type="button" value="Annuler" id="cancel" class="btn btn-secondary">
@@ -317,25 +318,19 @@ function renderPostForm(Post = null) {
         Post.Category = capitalizeFirstLetter(Post.Category);
         Post.Creation = nowInSeconds();
         Post = await Posts_API.Save(Post, create);
-        if (!Posts_API.error){
-
-        }
-            pageManager.update(true)
-        else
-            renderError("Une erreur est survenue!");
     });
     $('#cancel').on("click", function () {
         renderPosts();
     });
 }
-function renderPost(Post) {
+function renderPost(Post, hideOptions = false) {
     //Temporary
     return $(`
     <div class="postContainer" Post_id=${Post.Id}">
         <div class="post noselect">
             <div class="postHeader">
                 <div class="postCategory ${Post.Category}">${Post.Category}</div>
-                <div class="PostCommandPanel">
+                <div class="PostCommandPanel" ${!hideOptions ? "" : "hidden"}>
                     <span class="editCmd cmdIcon fa-solid fa-pen" editPostId="${Post.Id}" title="Modifier ${Post.Title}"></span>
                     <span class="deleteCmd cmdIcon fa-solid fa-xmark" deletePostId="${Post.Id}" title="Effacer ${Post.Title}"></span>
                 </div>
