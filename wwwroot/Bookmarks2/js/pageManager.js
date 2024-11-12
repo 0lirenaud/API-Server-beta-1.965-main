@@ -38,6 +38,7 @@ class PageManager {
         }
         return `?limit=${limit}&offset=${offset}`;
     }
+
     scrollToElem(elemId) {
         let itemToReach = $("#" + elemId);
         if (itemToReach) {
@@ -75,6 +76,7 @@ class PageManager {
                 instance.currentPage.offset++;
                 instance.update(true);
             }
+            //console.log(`scroll`,instance.scrollPanel.scrollTop())
         });
     }
 }

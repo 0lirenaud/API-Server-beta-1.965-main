@@ -30,12 +30,20 @@ async function Init_UI() {
         renderAbout();
     });
     $('#searchBttn').on('click', () => {
-        doSearch();
+       // doSearch();
     });
     showPosts();
     start_Periodic_Refresh();
 }
-
+function doSearch() {
+    console.log('Searching posts');
+    previousScrollPosition = 0;
+    $("#content").scrollTop(0);
+    offset = 0;
+    endOfData = false;
+    search = $("#postFilter").val();
+    renderPosts();
+}
 function showPosts() {
     $("#actionTitle").text("Liste des publications");
     $("#scrollPanel").show();
@@ -260,7 +268,7 @@ function newPost() {
     Post.Text = "";
     Post.Category = "";
     Post.Image = "";
-    Post.Creation = "";
+    Post.Creation = Date.now();
     return Post;
 }
 function renderPostForm(Post = null) {
@@ -326,8 +334,7 @@ function renderPostForm(Post = null) {
         Post.Title = capitalizeFirstLetter(Post.Title);
         Post.Text = capitalizeFirstLetter(Post.Text);
         Post.Category = capitalizeFirstLetter(Post.Category);
-        Post.Creation = nowInSeconds();
-        Post = await Posts_API.Save(Post, create);
+        await Posts_API.Save(Post, create);
         if (!Posts_API.error){
             showPosts();
             await pageManager.update(false);
