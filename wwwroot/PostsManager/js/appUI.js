@@ -29,6 +29,9 @@ async function Init_UI() {
     $('#aboutCmd').on("click", function () {
         renderAbout();
     });
+    $('#searchBttn').on('click', () => {
+        doSearch();
+    });
     showPosts();
     start_Periodic_Refresh();
 }
