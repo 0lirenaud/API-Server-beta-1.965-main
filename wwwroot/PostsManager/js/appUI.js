@@ -17,14 +17,13 @@ async function Init_UI() {
     };
     currentETag = await Posts_API.HEAD();
     pageManager = new PageManager('scrollPanel', 'postsPanel', postItemLayout, renderPosts);
+    compileCategories();
     $("#actionTitle").text("Liste des publications");
     $('#createPost').on("click", async function () {
         renderCreatePostForm();
     });
     $('#abort').on("click", async function () {
         showPosts();
-        $("#PostForm").remove();
-        $('.PostdeleteForm').remove();
     });
     $('#aboutCmd').on("click", function () {
         renderAbout();
@@ -36,7 +35,6 @@ async function Init_UI() {
     start_Periodic_Refresh();
 }
 function doSearch() {
-    console.log('Searching posts');
     previousScrollPosition = 0;
     $("#content").scrollTop(0);
     offset = 0;
@@ -48,7 +46,7 @@ function showPosts() {
     $("#actionTitle").text("Liste des publications");
     $("#scrollPanel").show();
     $('#abort').hide();
-    $('#PostForm').hide();
+    $('#postForm').hide();
     $('#aboutContainer').hide();
     $("#createPost").show();
     hold_Periodic_Refresh = false;
@@ -74,31 +72,11 @@ function start_Periodic_Refresh() {
 }
 
 function renderAbout() {
-    saveContentScrollPosition();
-    eraseContent();
-    $("#createPost").hide();
-    $("#abort").show();
-    $("#filterContainer").hide();
+    hidePosts();
     $("#actionTitle").text("À propos...");
-    $("#content").append(
-        $(`
-            <div class="aboutContainer">
-                <h2>Gestionnaire de publications</h2>
-                <hr>
-                <p>
-                    Petite application de gestion de publications à titre de démonstration
-                    d'interface utilisateur monopage réactive.
-                </p>
-                <p>
-                    Auteur: Houari Annabi & Olivier Renaud
-                </p>
-                <p>
-                    Collège Lionel-Groulx, Automne 2024
-                </p>
-            </div>
-        `))
+    $("#aboutContainer").show();
 }
-function updateDropDownMenu(categories) {
+function updateDropDownMenu() {
     let DDMenu = $("#DDMenu");
     let selectClass = selectedCategory === "" ? "fa-check" : "fa-fw";
     DDMenu.empty();
@@ -126,28 +104,23 @@ function updateDropDownMenu(categories) {
         renderAbout();
     });
     $('#allCatCmd').on("click", function () {
+        showPosts();
         selectedCategory = "";
-        renderPosts();
+        updateDropDownMenu();
+        pageManager.reset();
     });
     $('.category').on("click", function () {
+        showPosts();
         selectedCategory = $(this).text().trim();
-        renderPosts();
+        updateDropDownMenu();
+        pageManager.reset();
     });
-}
-function compileCategories(posts) {
-    let categories = [];
-    if (posts != null) {
-        posts.forEach(post => {
-            if (!categories.includes(post.Category))
-                categories.push(post.Category);
-        })
-        updateDropDownMenu(categories);
-    }
 }
 async function renderPosts(queryString) {
     let endOfData = false;
     $("#actionTitle").text("Liste des publications");
     addWaitingGif();
+    queryString += '&sort=Creation,desc';
     let response = await Posts_API.Get(query = queryString);
     if(!Posts_API.error) {
         currentETag = response.ETag;
@@ -218,7 +191,9 @@ async function renderDeletePostForm(id) {
     if(!Posts_API.error) {
         let Post = response.data;
         if (Post !== null) {
-            $("#content").append(`
+            $("#postForm").show();
+            $("#postForm").empty();
+            $("#postForm").append(`
             <div class="PostdeleteForm">
                 <h4>Effacer la publication suivante?</h4>
                 <br>
@@ -231,7 +206,6 @@ async function renderDeletePostForm(id) {
             </div>    
             `);
             $('#deletePost').on("click", async function () {
-                showWaitingGif();
                 await Posts_API.Delete(Post.Id);
                 if (!Posts_API.error) {
                     showPosts();
@@ -242,7 +216,6 @@ async function renderDeletePostForm(id) {
             });
             $('#cancel').on("click", function () {
                 showPosts();
-                $('.PostdeleteForm').remove();
                 $('#filterContainer').show();
             });
         }
@@ -279,8 +252,9 @@ function renderPostForm(Post = null) {
         Post.Image = "images/no-post.jpg";
     }
     $("#actionTitle").text(create ? "Création" : "Modification");
-    $("#PostForm").show();
-    $("#content").append(`
+    $("#postForm").show();
+    $("#postForm").empty();
+    $("#postForm").append(`
         <form class="form" id="PostForm">
             <input type="hidden" name="Id" value="${Post.Id}"/>
             <input type="hidden" name="Creation" value="${Post.Creation}"/>
@@ -334,7 +308,7 @@ function renderPostForm(Post = null) {
         Post.Title = capitalizeFirstLetter(Post.Title);
         Post.Text = capitalizeFirstLetter(Post.Text);
         Post.Category = capitalizeFirstLetter(Post.Category);
-        await Posts_API.Save(Post, create);
+        Post = await Posts_API.Save(Post, create);
         if (!Posts_API.error){
             showPosts();
             await pageManager.update(false);
@@ -345,13 +319,26 @@ function renderPostForm(Post = null) {
     });
     $('#cancel').on("click", function () {
         showPosts();
-        $("#PostForm").remove();
     });
+}
+async function compileCategories() {
+    categories = [];
+    let response = await Posts_API.GetQuery("?fields=category&sort=category");
+    if (!Posts_API.error) {
+        let items = response.data;
+        if (items != null) {
+            items.forEach(item => {
+                if (!categories.includes(item.Category))
+                    categories.push(item.Category);
+            })
+            updateDropDownMenu();
+        }
+    }
 }
 function renderPost(Post, hideOptions = false) {
     //Temporary
     return $(`
-    <div class="postContainer" Post_id=${Post.Id}">
+    <div class="postContainer" id="${Post.Id}">
         <div class="post noselect">
             <div class="postHeader">
                 <div class="postCategory ${Post.Category}">${Post.Category}</div>

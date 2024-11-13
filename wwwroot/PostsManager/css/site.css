@@ -3,6 +3,8 @@
     --blue: rgb(0, 100, 214);
     --politic: rgb(46, 145, 0); 
     --sante: rgb(197, 0, 0); 
+    --sport: rgb(160, 5, 216); 
+    --monde: rgb(239, 144, 2); 
 }
 
 .Santé {
@@ -11,6 +13,18 @@
 
 .Politique {
     color: var(--politic);
+}
+
+.Sport {
+    color: var(--sport);
+}
+
+.Patrouille {
+    color: var(--blue);
+}
+
+.Monde {
+    color: var(--monde);
 }
 
 * {
@@ -174,6 +188,7 @@
     display: flex;
     align-items: center;
     flex-direction: column;
+    padding: 0 10px;
 }
 
 .postContainer {
@@ -182,7 +197,7 @@
     padding: 10px;
     border-radius: 6px;
     margin: 20px 10px 0;
-    max-width: 700px;
+    width: 100%;
 }
 
 .post {
@@ -361,4 +376,8 @@ input, textarea {
 
 a {
     text-decoration: none !important;
+}
+
+.postDescription {
+    text-align: justify;
 }

@@ -4,6 +4,14 @@ class Posts_API {
         this.currentStatus = 0;
         this.error = false;
     }
+    static setHttpErrorState(xhr) {
+        if (xhr.responseJSON)
+            this.currentHttpError = xhr.responseJSON.error_description;
+        else
+            this.currentHttpError = xhr.statusText == 'error' ? "Service introuvable" : xhr.statusText;
+        this.currentStatus = xhr.status;
+        this.error = true;
+    }
     static API_URL() { return "http://localhost:5000/api/posts" };
     static async HEAD() {
         return new Promise(resolve => {
@@ -17,28 +25,44 @@ class Posts_API {
         });
     }
     static async Get(id = null, query = "") {
+        Posts_API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
                 url: this.API_URL() + (id != null ? "/" + id : query),
                 complete: data => {  resolve({ETag:data.getResponseHeader('ETag'), data:data.responseJSON }); },
-                //success: data => { resolve(data); },
-                error: (xhr) => { console.log(xhr); resolve(null); }
+                error: (xhr) => { Posts_API.setHttpErrorState(xhr); resolve(null); }
+            });
+        });
+    }
+    static async GetQuery(queryString = "") {
+        Posts_API.initHttpState();
+        return new Promise(resolve => {
+            $.ajax({
+                url: this.API_URL() + queryString,
+                complete: data => {
+                    resolve({ ETag: data.getResponseHeader('ETag'), data: data.responseJSON });
+                },
+                error: (xhr) => {
+                    Posts_API.setHttpErrorState(xhr); resolve(null);
+                }
             });
         });
     }
     static async Save(data, create = true) {
+        Posts_API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
                 url: create ? this.API_URL() :  this.API_URL() + "/" + data.Id,
                 type: create ? "POST" : "PUT",
                 contentType: 'application/json',
                 data: JSON.stringify(data),
-                success: (/*data*/) => { resolve(true); },
-                error: (/*xhr*/) => { resolve(false /*xhr.status*/); }
+                success: (data) => { resolve(data); },
+                error: (xhr) => { Posts_API.setHttpErrorState(xhr); resolve(null); }
             });
         });
     }
     static async Delete(id) {
+        Posts_API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
                 url: this.API_URL() + "/" + id,
