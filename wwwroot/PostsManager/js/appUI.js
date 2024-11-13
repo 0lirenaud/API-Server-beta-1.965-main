@@ -1,12 +1,15 @@
 //Utiliser utilities, demander a chourot comment le joindre car j'y arrive pas.
 const periodicRefreshPeriod = 10;
 let categories = [];
+let search = "";
 let selectedCategory = "";
 let currentETag = "";
 let hold_Periodic_Refresh = false;
 let pageManager;
 let itemLayout;
 let endOfData = false;
+let waiting = null;
+let waitingGifTrigger = 2000;
 
 Init_UI();
 
@@ -15,10 +18,14 @@ async function Init_UI() {
         width: $("#sample").outerWidth(),
         height: $("#sample").outerHeight()
     };
+
     currentETag = await Posts_API.HEAD();
     pageManager = new PageManager('scrollPanel', 'postsPanel', postItemLayout, renderPosts);
     compileCategories();
+    $('#aboutContainer').hide();
+    $("#errorContainer").hide();
     $("#actionTitle").text("Liste des publications");
+
     $('#createPost').on("click", async function () {
         renderCreatePostForm();
     });
@@ -29,18 +36,14 @@ async function Init_UI() {
         renderAbout();
     });
     $('#searchBttn').on('click', () => {
-       // doSearch();
+        doSearch();
     });
     showPosts();
     start_Periodic_Refresh();
 }
 function doSearch() {
-    previousScrollPosition = 0;
-    $("#content").scrollTop(0);
-    offset = 0;
-    endOfData = false;
-    search = $("#postFilter").val();
-    renderPosts();
+    search = $("#postFilter").val().trim().replaceAll(' ', ',');
+    pageManager.reset();
 }
 function showPosts() {
     $("#actionTitle").text("Liste des publications");
@@ -49,6 +52,7 @@ function showPosts() {
     $('#postForm').hide();
     $('#aboutContainer').hide();
     $("#createPost").show();
+    hideSearch(false);
     hold_Periodic_Refresh = false;
 }
 function hidePosts() {
@@ -57,7 +61,6 @@ function hidePosts() {
     $("#abort").show();
     hold_Periodic_Refresh = true;
 }
-
 function start_Periodic_Refresh() {
     setInterval(async () => {
         if (!hold_Periodic_Refresh) {
@@ -65,14 +68,15 @@ function start_Periodic_Refresh() {
             if (currentETag != etag) {
                 currentETag = etag;
                 await pageManager.update(false);
+                compileCategories();
             }
         }
     },
         periodicRefreshPeriod * 1000);
 }
-
 function renderAbout() {
     hidePosts();
+    hideSearch(true);
     $("#actionTitle").text("À propos...");
     $("#aboutContainer").show();
 }
@@ -117,15 +121,17 @@ function updateDropDownMenu() {
     });
 }
 async function renderPosts(queryString) {
-    let endOfData = false;
     $("#actionTitle").text("Liste des publications");
-    addWaitingGif();
     queryString += '&sort=Creation,desc';
-    let response = await Posts_API.Get(query = queryString);
-    if(!Posts_API.error) {
+    if (search != "") queryString += "&keywords=" + search;
+    addWaitingGif();
+    let endOfData = true;
+    let response = await Posts_API.GetQuery(queryString);
+    if (!Posts_API.error) {
         currentETag = response.ETag;
         let Posts = response.data;
-        if(Posts.length > 0) {
+        $("#postsPanel").empty();
+        if (Posts.length > 0) {
             Posts.forEach(Post => {
                 if ((selectedCategory === "") || (selectedCategory === Post.Category))
                     $("#postsPanel").append(renderPost(Post));
@@ -150,17 +156,35 @@ async function renderPosts(queryString) {
     return endOfData;
 }
 function addWaitingGif() {
-    $("#postsPanel").append($("<div id='waitingGif' class='waitingGifcontainer'><img class='waitingGif' src='Loading_icon.gif' /></div>'"));
+    clearTimeout(waiting);
+    waiting = setTimeout(() => {
+        $("#postsPanel").append($("<div id='waitingGif' class='waitingGifcontainer'><img class='waitingGif' src='Loading_icon.gif' /></div>"));
+    }, waitingGifTrigger)
 }
 function removeWaitingGif() {
+    clearTimeout(waiting);
     $("#waitingGif").remove();
 }
+function hideSearch(hide) {
+    if (hide)
+        $("#filterContainer").hide();
+    else
+        $("#filterContainer").show();
+}
 function renderError(message) {
-    $("#content").append(
+    removeWaitingGif();
+    hidePosts();
+    hideSearch(true);
+    $("#scrollPanel").hide();
+    $(".headerOptions").hide();
+    $("#actionTitle").text("Erreur du serveur...");
+    $("#errorContainer").show();
+    $("#errorContainer").empty();
+    $("#errorContainer").append(
         $(`
-            <div class="errorContainer">
+            <span class="errorContainer">
                 ${message}
-            </div>
+            </span>
         `)
     );
 }
@@ -170,7 +194,7 @@ function renderCreatePostForm() {
 async function renderEditPostForm(id) {
     addWaitingGif();
     let response = await Posts_API.Get(id)
-    if(!Posts_API.error){
+    if (!Posts_API.error) {
         let Post = response.data;
         if (Post !== null)
             renderPostForm(Post);
@@ -183,12 +207,13 @@ async function renderEditPostForm(id) {
 }
 async function renderDeletePostForm(id) {
     hidePosts();
+    hideSearch(true);
     $("#createPost").hide();
     $("#abort").show();
     $('#filterContainer').hide();
     $("#actionTitle").text("Retrait");
     let response = await Posts_API.Get(id)
-    if(!Posts_API.error) {
+    if (!Posts_API.error) {
         let Post = response.data;
         if (Post !== null) {
             $("#postForm").show();
@@ -196,7 +221,7 @@ async function renderDeletePostForm(id) {
             $("#postForm").append(`
             <div class="PostdeleteForm">
                 <h4>Effacer la publication suivante?</h4>
-                <br>
+                <hr/>
                 ${renderPost(Post, true).html()}
                 <br>
                 <div class="formButtons">
@@ -210,9 +235,12 @@ async function renderDeletePostForm(id) {
                 if (!Posts_API.error) {
                     showPosts();
                     await pageManager.update(false);
+                    compileCategories();
                 }
-                else
+                else {
+                    console.log(Bookmarks_API.currentHttpError)
                     renderError("Une erreur est survenue!");
+                }
             });
             $('#cancel').on("click", function () {
                 showPosts();
@@ -221,7 +249,7 @@ async function renderDeletePostForm(id) {
         }
         else
             renderError("Publication introuvable!");
-    } 
+    }
     else
         renderError(Posts_API.currentHttpError);
 }
@@ -241,13 +269,14 @@ function newPost() {
     Post.Text = "";
     Post.Category = "";
     Post.Image = "";
-    Post.Creation = Date.now();
+    Post.Creation = nowInSeconds();
     return Post;
 }
 function renderPostForm(Post = null) {
     hidePosts();
+    hideSearch(true);
     let create = Post == null;
-    if (create){
+    if (create) {
         Post = newPost();
         Post.Image = "images/no-post.jpg";
     }
@@ -300,7 +329,7 @@ function renderPostForm(Post = null) {
             <input type="button" value="Annuler" id="cancel" class="btn btn-secondary">
         </form>
     `);
-    initImageUploaders(); 
+    initImageUploaders();
     initFormValidation();
     $('#PostForm').on("submit", async function (event) {
         event.preventDefault();
@@ -309,9 +338,10 @@ function renderPostForm(Post = null) {
         Post.Text = capitalizeFirstLetter(Post.Text);
         Post.Category = capitalizeFirstLetter(Post.Category);
         Post = await Posts_API.Save(Post, create);
-        if (!Posts_API.error){
+        if (!Posts_API.error) {
             showPosts();
             await pageManager.update(false);
+            compileCategories();
             pageManager.scrollToElem(Post.Id);
         }
         else
@@ -344,7 +374,7 @@ function renderPost(Post, hideOptions = false) {
                 <div class="postCategory ${Post.Category}">${Post.Category}</div>
                 <div class="PostCommandPanel" ${!hideOptions ? "" : "hidden"}>
                     <span class="editCmd cmdIcon fa-solid fa-pen" editPostId="${Post.Id}" title="Modifier ${Post.Title}"></span>
-                    <span class="deleteCmd cmdIcon fa-solid fa-xmark" deletePostId="${Post.Id}" title="Effacer ${Post.Title}"></span>
+                    <span class="deleteCmd cmdIcon fa-solid fa-trash" deletePostId="${Post.Id}" title="Effacer ${Post.Title}"></span>
                 </div>
             </div>
             <div class="postTitle">${Post.Title}</div>

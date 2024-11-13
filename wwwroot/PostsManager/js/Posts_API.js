@@ -24,11 +24,11 @@ class Posts_API {
             });
         });
     }
-    static async Get(id = null, query = "") {
+    static async Get(id = null) {
         Posts_API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
-                url: this.API_URL() + (id != null ? "/" + id : query),
+                url: this.API_URL() + (id != null ? "/" + id : ""),
                 complete: data => {  resolve({ETag:data.getResponseHeader('ETag'), data:data.responseJSON }); },
                 error: (xhr) => { Posts_API.setHttpErrorState(xhr); resolve(null); }
             });
@@ -68,7 +68,7 @@ class Posts_API {
                 url: this.API_URL() + "/" + id,
                 type: "DELETE",
                 success: () => { resolve(true); },
-                error: (/*xhr*/) => { resolve(false /*xhr.status*/); }
+                error: (xhr) => { resolve(false, xhr.status); }
             });
         });
     }
