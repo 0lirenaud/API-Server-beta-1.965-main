@@ -125,13 +125,13 @@ async function renderPosts(queryString) {
     $("#actionTitle").text("Liste des publications");
     queryString += '&sort=Creation,desc';
     if (search != "") queryString += "&keywords=" + search;
+    if (selectedCategory != "") queryString += "&category=" + selectedCategory;
     addWaitingGif();
-    let endOfData = true;
+    let endOfData = false;
     let response = await Posts_API.GetQuery(queryString);
     if (!Posts_API.error) {
         currentETag = response.ETag;
         let Posts = response.data;
-        $("#postsPanel").empty();
         if (Posts.length > 0) {
             Posts.forEach(Post => {
                 if ((selectedCategory === "") || (selectedCategory === Post.Category))
