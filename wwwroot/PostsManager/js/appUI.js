@@ -327,8 +327,10 @@ function renderPostForm(Post = null) {
                 style="cursor:pointer;">
             </div>
             <br>
-            <input type="submit" value="Enregistrer" id="savePost" class="btn btn-primary">
-            <input type="button" value="Annuler" id="cancel" class="btn btn-secondary">
+            <div style="display:flex;justify-content: center; gap: 5px;">
+                <input type="submit" value="Enregistrer" id="savePost" class="btn btn-primary">
+                <input type="button" value="Annuler" id="cancel" class="btn btn-secondary">
+            </div>
         </form>
     `);
     initImageUploaders();

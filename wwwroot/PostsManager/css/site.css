@@ -340,8 +340,13 @@ label {
 
 form {
   padding: 20px;
-  max-width: 350px;
   margin: auto;
+  display:flex;
+  flex-direction: column;
+}
+
+form .btn {
+  align-self: center;
 }
 
 .errorContainer {
