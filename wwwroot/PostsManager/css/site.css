@@ -383,4 +383,24 @@ a {
 
 .postDescription {
   text-align: justify;
+  height: 50px;
+  overflow: hidden;
+}
+.seeMore{
+  text-align: center;
+  cursor: pointer;
+  font-weight: bold;
+  color: rgba(0, 100, 214, 0.8);
+}
+.seeMore:hover{
+  color: black;
+}
+
+.more {
+  text-align: justify;
+  height: auto;
+  overflow: auto;
+}
+.lessTxt{
+  content: 'Voir moins';
 }

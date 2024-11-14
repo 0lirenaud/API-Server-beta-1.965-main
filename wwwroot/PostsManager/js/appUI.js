@@ -40,6 +40,7 @@ async function Init_UI() {
     });
     showPosts();
     start_Periodic_Refresh();
+
 }
 function doSearch() {
     search = $("#postFilter").val().trim().replaceAll(' ', ',');
@@ -144,6 +145,7 @@ async function renderPosts(queryString) {
             $(".deleteCmd").on("click", function () {
                 renderDeletePostForm($(this).attr("deletepostId"));
             });
+            descriptionListener();
         }
         else {
             endOfData = true;
@@ -380,10 +382,24 @@ function renderPost(Post, hideOptions = false) {
             <div class="postTitle">${Post.Title}</div>
             <div class="postImgContainer"><img src="${Post.Image}" class="postImg" alt="Image de la publication"/></div>
             <div class="postDate">${secondsToDateString(Post.Creation)}</div>
-            <div class="postDescription">${Post.Text}</div>
+            <div class="postDescription">${Post.Text.replaceAll('\n', '<br>')}</div>
+            <div class="seeMore" id="more_${Post.Id}">
+                <span>Voir plus...</span>
+                <i class="fa fa-chevron-circle-down" aria-hidden="true"></i>
+            <div>
         </div>
     </div>           
     `);
+}
+function descriptionListener(){
+    $('.seeMore').on('click', function () {
+        let description = $(this).prev();
+        $(description).toggleClass('more');
+        let txt = $(this).children().first().text();
+        console.log(txt);
+        $(this).children().first().text(txt.includes('plus') ? 'Voir moins' : 'Voir plus...');
+        $(this).children().eq(1).toggleClass('fa-chevron-circle-down fa-chevron-circle-up');
+    });
 }
 function capitalizeFirstLetter(s) {
     if (typeof s !== 'string') return '';
